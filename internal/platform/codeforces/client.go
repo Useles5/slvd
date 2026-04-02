@@ -31,12 +31,11 @@ func FetchRecent(handle string) {
 		fmt.Printf("failed to fetch codeforces data: %v\n", err)
 		return
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
 			fmt.Printf("warning: failed to close body: %v\n", err)
 		}
-	}(resp.Body)
+	}()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
