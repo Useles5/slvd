@@ -2,8 +2,8 @@
 .idea/
 
 # Compiled binaries
-slvd
-slvd.exe
+/slvd
+/slvd.exe
 
 # OS specific files
 .DS_Store
