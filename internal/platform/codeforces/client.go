@@ -23,13 +23,12 @@ type CFProblem struct {
 	Name string `json:"name"`
 }
 
-func FetchRecent(handle string) {
+func FetchRecent(handle string) ([]string, error) {
 	url := fmt.Sprintf("https://codeforces.com/api/user.status?handle=%s&from=1&count=10", handle)
 
 	resp, err := http.Get(url)
 	if err != nil {
-		fmt.Printf("failed to fetch codeforces data: %v\n", err)
-		return
+		return nil, fmt.Errorf("failed to fetch codeforces data: %v\n", err)
 	}
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
@@ -39,21 +38,20 @@ func FetchRecent(handle string) {
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Printf("failed to read response body: %v\n", err)
-		return
+		return nil, fmt.Errorf("failed to read response body: %v\n", err)
 	}
 
 	var data CFResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		fmt.Printf("failed to unmarshal response body: %v\n", err)
+		return nil, fmt.Errorf("failed to unmarshal response body: %v\n", err)
 	}
 
 	now := time.Now().UTC()
 	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 	startOfDayUnix := startOfDay.Unix()
 
-	solvedCount := 0
+	var solvedToday []string
 
 	for _, sub := range data.Result {
 		if sub.CreationTimeSeconds < startOfDayUnix {
@@ -61,15 +59,10 @@ func FetchRecent(handle string) {
 		}
 
 		if sub.Verdict == "OK" {
-			if solvedCount == 0 {
-				fmt.Printf("Today's Solved Problem for %s:\n", handle)
-			}
-			fmt.Printf("Problem: %s\n", sub.Problem.Name)
-			solvedCount++
+			solvedToday = append(solvedToday, sub.Problem.Name)
 		}
 	}
 
-	if solvedCount == 0 {
-		fmt.Println("No problems solved today")
-	}
+	return solvedToday, nil
+
 }
