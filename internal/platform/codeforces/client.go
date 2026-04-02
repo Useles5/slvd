@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 type CFResponse struct {
@@ -13,7 +14,7 @@ type CFResponse struct {
 }
 
 type CFSubmission struct {
-	CreationTimeSeconds int64     `json:"creation_time_seconds"`
+	CreationTimeSeconds int64     `json:"creationTimeSeconds"`
 	Verdict             string    `json:"verdict"`
 	Problem             CFProblem `json:"problem"`
 }
@@ -30,24 +31,46 @@ func FetchRecent(handle string) {
 		fmt.Printf("failed to fetch codeforces data: %v\n", err)
 		return
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Printf("warning: failed to close body: %v\n", err)
+		}
+	}(resp.Body)
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Printf("failed to read response body: %v\n", err)
 		return
 	}
-	
+
 	var data CFResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		fmt.Printf("failed to unmarshal response body: %v\n", err)
 	}
 
-	fmt.Printf("Recent Submissions for %s:\n", handle)
-	fmt.Println("--------------------------------")
+	now := time.Now().UTC()
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	startOfDayUnix := startOfDay.Unix()
+
+	solvedCount := 0
 
 	for _, sub := range data.Result {
-		fmt.Printf("Problem: %s | Verdict: %s\n", sub.Problem.Name, sub.Verdict)
+		if sub.CreationTimeSeconds < startOfDayUnix {
+			break
+		}
+
+		if sub.Verdict == "OK" {
+			if solvedCount == 0 {
+				fmt.Printf("Today's Solved Problem for %s:\n", handle)
+			}
+			fmt.Printf("Problem: %s\n", sub.Problem.Name)
+			solvedCount++
+		}
+	}
+
+	if solvedCount == 0 {
+		fmt.Println("No problems solved today")
 	}
 }
