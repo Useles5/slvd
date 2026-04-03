@@ -24,43 +24,63 @@ type CFProblem struct {
 }
 
 func FetchRecent(handle string) ([]string, error) {
-	url := fmt.Sprintf("https://codeforces.com/api/user.status?handle=%s&from=1&count=10", handle)
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch codeforces data: %v\n", err)
-	}
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil {
-			fmt.Printf("warning: failed to close body: %v\n", err)
-		}
-	}()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %v\n", err)
-	}
-
-	var data CFResponse
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response body: %v\n", err)
-	}
-
 	now := time.Now().UTC()
 	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 	startOfDayUnix := startOfDay.Unix()
 
 	var solvedToday []string
 
-	for _, sub := range data.Result {
-		if sub.CreationTimeSeconds < startOfDayUnix {
+	fromIndex := 1 // Cf uses 1 based indexing
+	pageSize := 50 // 50 submissions per page
+
+	for {
+		url := fmt.Sprintf("https://codeforces.com/api/user.status?handle=%s&from=%d&count=%d", handle, fromIndex, pageSize)
+
+		resp, err := http.Get(url)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch codeforces data: %v", err) // no need of '\n' as log.Fatalf automatically adds it
+		}
+
+		body, err := io.ReadAll(resp.Body)
+
+		_ = resp.Body.Close() // close the connection
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to read response body: %v\n", err)
+		}
+
+		var data CFResponse
+		err = json.Unmarshal(body, &data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal response body: %v\n", err)
+		}
+
+		// user has no more submissions
+		if len(data.Result) == 0 {
 			break
 		}
 
-		if sub.Verdict == "OK" {
-			solvedToday = append(solvedToday, sub.Problem.Name)
+		keepFetching := true
+
+		// the list of submission is sorted, so newer appears first
+		for _, sub := range data.Result {
+			// If we hit a submission from yesterday, stop processing this page,
+			// and tell the network loop to stop fetching more pages.
+			if sub.CreationTimeSeconds < startOfDayUnix {
+				keepFetching = false
+				break
+			}
+
+			if sub.Verdict == "OK" {
+				solvedToday = append(solvedToday, sub.Problem.Name)
+			}
 		}
+
+		if !keepFetching {
+			break
+		}
+
+		fromIndex += pageSize
 	}
 
 	return solvedToday, nil
