@@ -8,24 +8,26 @@ import (
 	"time"
 )
 
-type CFResponse struct {
+type Client struct{}
+
+type cfResponse struct {
 	Status string         `json:"status"`
-	Result []CFSubmission `json:"result"`
+	Result []cfSubmission `json:"result"`
 }
 
-type CFSubmission struct {
+type cfSubmission struct {
 	CreationTimeSeconds int64     `json:"creationTimeSeconds"`
 	Verdict             string    `json:"verdict"`
-	Problem             CFProblem `json:"problem"`
+	Problem             cfProblem `json:"problem"`
 }
 
-type CFProblem struct {
+type cfProblem struct {
 	Name string `json:"name"`
 }
 
-func FetchRecent(handle string) ([]string, error) {
+func (c *Client) FetchRecent(handle string) ([]string, error) {
 	now := time.Now().UTC()
-	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	startOfDay := time.Date(now.Year(), now.Month()-1, now.Day(), 0, 0, 0, 0, time.UTC)
 	startOfDayUnix := startOfDay.Unix()
 
 	var solvedToday []string
@@ -49,7 +51,7 @@ func FetchRecent(handle string) ([]string, error) {
 			return nil, fmt.Errorf("failed to read response body: %v\n", err)
 		}
 
-		var data CFResponse
+		var data cfResponse
 		err = json.Unmarshal(body, &data)
 		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal response body: %v\n", err)

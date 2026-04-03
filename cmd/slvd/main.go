@@ -4,13 +4,16 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/Useles5/slvd/internal/platform"
 	"github.com/Useles5/slvd/internal/platform/codeforces"
 )
 
 func main() {
 	handle := "tourist"
 	//fmt.Println("fetching recent codeforces submissions...")
-	solves, err := codeforces.FetchRecent(handle)
+
+	var activePlatform platform.Provider = &codeforces.Client{}
+	solves, err := activePlatform.FetchRecent(handle)
 	if err != nil {
 		log.Fatalf("Critical error: %v\n", err)
 	}
