@@ -27,7 +27,7 @@ type cfProblem struct {
 
 func (c *Client) FetchRecent(handle string) ([]string, error) {
 	now := time.Now().UTC()
-	startOfDay := time.Date(now.Year(), now.Month()-1, now.Day(), 0, 0, 0, 0, time.UTC)
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 	startOfDayUnix := startOfDay.Unix()
 
 	var solvedToday []string
