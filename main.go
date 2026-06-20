@@ -26,13 +26,13 @@ type CFResponse struct {
 }
 
 type CFSubmission struct {
-	ID                  int     `json:"id"`
-	CreationTimeSeconds int     `json:"creationTimeSeconds"`
-	Verdict             Verdict `json:"verdict,omitempty"`
-	Problem             Problem `json:"problem"`
+	ID                  int       `json:"id"`
+	CreationTimeSeconds int64     `json:"creationTimeSeconds"`
+	Verdict             Verdict   `json:"verdict,omitempty"`
+	Problem             CFProblem `json:"problem"`
 }
 
-type Problem struct {
+type CFProblem struct {
 	ContestID int    `json:"contestId"`
 	Index     string `json:"index"`
 	Name      string `json:"name"`
@@ -74,20 +74,26 @@ func main() {
 		log.Fatalf("Failed to parse json: %v", err)
 	}
 
-	foundSolved := false
+	seen := make(map[string]struct{})
 
 	for _, sub := range cfData.Result {
-		if sub.Verdict == VerdictOK {
-			foundSolved = true
-
-			fmt.Printf("%d%s - %s\n",
-				sub.Problem.ContestID,
-				sub.Problem.Index,
-				sub.Problem.Name)
+		if sub.Verdict != VerdictOK {
+			continue
 		}
+
+		problemKey := fmt.Sprintf("%d%s", sub.Problem.ContestID, sub.Problem.Index)
+
+		if _, exists := seen[problemKey]; exists {
+			continue
+		}
+
+		seen[problemKey] = struct{}{}
+
+		fmt.Printf("%s - %s\n", problemKey, sub.Problem.Name)
+
 	}
 
-	if !foundSolved {
-		fmt.Println("No Successful submissions found in given range")
+	if len(seen) == 0 {
+		fmt.Fprintf(os.Stderr, "No problems found\n")
 	}
 }
