@@ -28,7 +28,7 @@ type CFResponse struct {
 type CFSubmission struct {
 	ID                  int       `json:"id"`
 	CreationTimeSeconds int64     `json:"creationTimeSeconds"`
-	Verdict             Verdict   `json:"verdict,omitempty"`
+	Verdict             Verdict   `json:"verdict"`
 	Problem             CFProblem `json:"problem"`
 }
 
@@ -76,7 +76,21 @@ func main() {
 
 	seen := make(map[string]struct{})
 
+	now := time.Now()
+	midnightUnix := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).Unix()
+
+	processed := 0
+
 	for _, sub := range cfData.Result {
+
+		// API sends newest first.
+		// Once we hit yesterday's problem, we can safely break.
+		if sub.CreationTimeSeconds < midnightUnix {
+			break
+		}
+
+		processed++
+		
 		if sub.Verdict != VerdictOK {
 			continue
 		}
@@ -96,4 +110,6 @@ func main() {
 	if len(seen) == 0 {
 		fmt.Fprintf(os.Stderr, "No problems found\n")
 	}
+
+	fmt.Fprintf(os.Stderr, "fetched=%d processed_today=%d unique_solved=%d\n", len(cfData.Result), processed, len(seen))
 }
