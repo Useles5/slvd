@@ -18,7 +18,7 @@ func main() {
 		log.Fatalf("Failed to fetch Codeforces submissions: %v", err)
 	}
 
-	solvedProblems, processed := filter.GetSolvedProblems(subs, opts.Last)
+	solvedProblems, processed := filter.GetSolvedProblems(subs, opts)
 	for _, solvedProblem := range solvedProblems {
 		fmt.Println(solvedProblem)
 	}
@@ -27,10 +27,13 @@ func main() {
 		fmt.Fprintf(os.Stderr, "No problems found\n")
 	}
 
-	if opts.Last > 0 {
-		fmt.Fprintf(os.Stderr, "[Mode: Last %d] fetched=%d processed=%d unique_solved=%d\n", opts.Last, len(subs), processed, len(solvedProblems))
-	} else {
-		fmt.Fprintf(os.Stderr, "[Mode: Today]  fetched=%d processed=%d unique_solved=%d\n", len(subs), processed, len(solvedProblems))
+	modeStr := "Today"
+	if opts.Date != "" {
+		modeStr = "Date: " + opts.Date
+	}
+	if opts.Last != -1 {
+		modeStr = fmt.Sprintf("Last %d", opts.Last)
 	}
 
+	fmt.Fprintf(os.Stderr, "[Mode: %s] fetched=%d processed=%d unique_solved=%d\n", modeStr, len(subs), processed, len(solvedProblems))
 }

@@ -4,48 +4,101 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Useles5/slvd/internal/config"
 	"github.com/Useles5/slvd/internal/models"
 )
 
-func GetSolvedProblems(submission []models.Submission, lastN int) ([]string, int) {
+// GetSolvedProblems is the pipeline Orchestrator
+func GetSolvedProblems(submissions []models.Submission, opts *config.Options) ([]string, int) {
+
+	// Clean
+	data := keepOnlyAccepted(submissions)
+
+	// Time bound
+	if opts.Date != "" || opts.Last == -1 {
+		data = filterByDate(data, opts.Date)
+	}
+
+	// Limit and Format
+	return applyLimitAndFormat(data, opts.Last)
+}
+
+// keepOnlyAccepted removes failed submissions
+func keepOnlyAccepted(submission []models.Submission) []models.Submission {
+	var validSubmissions []models.Submission
+	for _, sub := range submission {
+		if sub.IsAccepted {
+			validSubmissions = append(validSubmissions, sub)
+		}
+	}
+	return validSubmissions
+}
+
+// filterByDate restricts the data to a specific Date
+func filterByDate(submissions []models.Submission, dateStr string) []models.Submission {
+	now := time.Now()
+	var startBound, endBound time.Time
+
+	if dateStr != "" {
+		parsedDate, err := time.ParseInLocation("02-01-2006", dateStr, now.Location())
+		if err != nil {
+			fmt.Println("Warning: Invalid date format. Defaulting to Today.")
+			startBound = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		} else {
+			startBound = parsedDate
+		}
+	} else {
+		startBound = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	}
+	endBound = startBound.AddDate(0, 0, 1)
+
+	var filteredSubmissions []models.Submission
+	for _, sub := range submissions {
+
+		// new -------------> old data
+		// A B C || D E F || G H
+		//        ^        ^
+		//        |        |
+		//       end      start
+
+		// thank u cf
+
+		if sub.SubmittedAt.Before(startBound) {
+			break
+		}
+
+		if sub.SubmittedAt.After(endBound) || sub.SubmittedAt.Equal(endBound) {
+			continue
+		}
+		filteredSubmissions = append(filteredSubmissions, sub)
+	}
+	return filteredSubmissions
+}
+
+// applyLimitAndFormat handles unique submissions and the N cutoff (--last flag)
+func applyLimitAndFormat(submissions []models.Submission, limit int) ([]string, int) {
 	seen := make(map[string]struct{})
 	var solved []string
-
-	now := time.Now()
-	midnightUnix := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-
 	processed := 0
 
-	for _, sub := range submission {
+	for _, sub := range submissions {
 
-		if lastN > 0 {
-			if len(seen) == lastN {
-				break
-			}
-		} else {
-			// API sends newest first.
-			// Once we hit yesterday's problem, we can safely break.
-			if sub.SubmittedAt.Before(midnightUnix) {
-				break
-			}
+		// Stop if limit is provided and we reach it
+		if limit != -1 && len(seen) == limit {
+			break
 		}
 
 		processed++
 
-		if !sub.IsAccepted {
-			continue
-		}
-
+		// Skip duplicates
 		if _, exists := seen[sub.ProblemKey]; exists {
 			continue
 		}
 
 		seen[sub.ProblemKey] = struct{}{}
-
-		formattedString := fmt.Sprintf("%s - %s", sub.ProblemKey, sub.ProblemName)
-		solved = append(solved, formattedString)
-
+		solved = append(solved, fmt.Sprintf("%s - %s", sub.ProblemKey, sub.ProblemName))
 	}
 
 	return solved, processed
+
 }

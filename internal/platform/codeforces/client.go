@@ -31,7 +31,7 @@ type cfProblem struct {
 
 func FetchSubmissions(handle string) ([]models.Submission, error) {
 	safeUserName := url.QueryEscape(handle)
-	apiURL := fmt.Sprintf("https://codeforces.com/api/user.status?handle=%s&from=1&count=100", safeUserName)
+	apiURL := fmt.Sprintf("https://codeforces.com/api/user.status?handle=%s&from=1&count=2000", safeUserName)
 	client := &http.Client{
 		Timeout: time.Second * 10,
 	}
