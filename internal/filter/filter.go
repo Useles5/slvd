@@ -97,7 +97,7 @@ func applyLimitAndFormat(submissions []models.Submission, limit int) ([]string, 
 			continue
 		}
 
-		seen[sub.ProblemKey] = struct{}{}
+		seen[uniqueKey] = struct{}{}
 
 		solved = append(solved, fmt.Sprintf("[%s] %s - %s", sub.Platform, sub.ProblemKey, sub.ProblemName))
 	}
