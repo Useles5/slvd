@@ -4,21 +4,48 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 
 	"github.com/Useles5/slvd/internal/config"
 	"github.com/Useles5/slvd/internal/filter"
+	"github.com/Useles5/slvd/internal/models"
+	"github.com/Useles5/slvd/internal/platform/atcoder"
 	"github.com/Useles5/slvd/internal/platform/codeforces"
 )
 
 func main() {
 	opts := config.Parse()
 
-	subs, err := codeforces.FetchSubmissions(opts.Handle)
+	var allSubmissions []models.Submission
+
+	cfSubs, err := codeforces.FetchSubmissions(opts.Handle)
 	if err != nil {
 		log.Fatalf("Failed to fetch Codeforces submissions: %v", err)
 	}
 
-	solvedProblems, processed := filter.GetSolvedProblems(subs, opts)
+	allSubmissions = append(allSubmissions, cfSubs...)
+
+	acSubs, err := atcoder.FetchSubmissions(opts.Handle)
+	if err != nil {
+		log.Fatalf("Failed to fetch ATCoder submissions: %v", err)
+	}
+
+	allSubmissions = append(allSubmissions, acSubs...)
+
+	// Safety check
+	if len(allSubmissions) == 0 {
+		log.Fatalf("Critical: Could not fetch data from any platform")
+	}
+
+	//sort.Slice(allSubmissions, func(i, j int) bool {
+	//	return allSubmissions[i].SubmittedAt.After(allSubmissions[j].SubmittedAt)
+	//})
+
+	slices.SortFunc(allSubmissions, func(a, b models.Submission) int {
+		return b.SubmittedAt.Compare(a.SubmittedAt)
+	})
+
+	solvedProblems, processed := filter.GetSolvedProblems(allSubmissions, opts)
 	for _, solvedProblem := range solvedProblems {
 		fmt.Println(solvedProblem)
 	}
@@ -35,5 +62,5 @@ func main() {
 		modeStr = fmt.Sprintf("Last %d", opts.Last)
 	}
 
-	fmt.Fprintf(os.Stderr, "[Mode: %s] fetched=%d processed=%d unique_solved=%d\n", modeStr, len(subs), processed, len(solvedProblems))
+	fmt.Fprintf(os.Stderr, "[Mode: %s] fetched=%d processed=%d unique_solved=%d\n", modeStr, len(allSubmissions), processed, len(solvedProblems))
 }

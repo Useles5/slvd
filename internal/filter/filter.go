@@ -90,13 +90,16 @@ func applyLimitAndFormat(submissions []models.Submission, limit int) ([]string, 
 
 		processed++
 
+		// Incase diff sources have same problemKey
+		uniqueKey := fmt.Sprintf("%s:%s", sub.Platform, sub.ProblemKey)
 		// Skip duplicates
-		if _, exists := seen[sub.ProblemKey]; exists {
+		if _, exists := seen[uniqueKey]; exists {
 			continue
 		}
 
 		seen[sub.ProblemKey] = struct{}{}
-		solved = append(solved, fmt.Sprintf("%s - %s", sub.ProblemKey, sub.ProblemName))
+
+		solved = append(solved, fmt.Sprintf("[%s] %s - %s", sub.Platform, sub.ProblemKey, sub.ProblemName))
 	}
 
 	return solved, processed
