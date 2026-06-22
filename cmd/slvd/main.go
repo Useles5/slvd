@@ -25,9 +25,10 @@ func main() {
 
 	allSubmissions = append(allSubmissions, cfSubs...)
 
-	acSubs, err := atcoder.FetchSubmissions(opts.Handle)
+	acFrom := opts.GetAtCoderSecond()
+	acSubs, err := atcoder.FetchSubmissions(opts.Handle, acFrom)
 	if err != nil {
-		log.Fatalf("Failed to fetch ATCoder submissions: %v", err)
+		log.Fatalf("Failed to fetch AtCoder submissions: %v", err)
 	}
 
 	allSubmissions = append(allSubmissions, acSubs...)

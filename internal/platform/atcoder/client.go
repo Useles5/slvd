@@ -23,16 +23,14 @@ type acProblem struct {
 	Name string `json:"name"`
 }
 
-func FetchSubmissions(handle string) ([]models.Submission, error) {
+func FetchSubmissions(handle string, fromSecond int64) ([]models.Submission, error) {
 	problemMap, err := fetchProblemMap()
 	if err != nil {
 		fmt.Printf("Warning: Failed to load AtCoder problem names: %v\n", err)
 	}
 
 	safeUserName := url.QueryEscape(handle)
-
-	// 7 days before the selected time
-	fromSecond := time.Now().AddDate(0, 0, -7).Unix()
+	
 	apiURL := fmt.Sprintf("https://kenkoooo.com/atcoder/atcoder-api/v3/user/submissions?user=%s&from_second=%d", safeUserName, fromSecond)
 
 	client := &http.Client{
