@@ -18,20 +18,26 @@ func main() {
 
 	var allSubmissions []models.Submission
 
-	cfSubs, err := codeforces.FetchSubmissions(opts.Handle)
-	if err != nil {
-		log.Fatalf("Failed to fetch Codeforces submissions: %v", err)
+	fetchAll := !opts.CF && !opts.ATC
+
+	if fetchAll || opts.CF {
+		cfSubs, err := codeforces.FetchSubmissions(opts.Handle)
+		if err != nil {
+			log.Fatalf("Failed to fetch Codeforces submissions: %v", err)
+		}
+
+		allSubmissions = append(allSubmissions, cfSubs...)
 	}
+	
+	if fetchAll || opts.ATC {
+		acFrom := opts.GetAtCoderSecond()
+		acSubs, err := atcoder.FetchSubmissions(opts.Handle, acFrom)
+		if err != nil {
+			log.Fatalf("Failed to fetch AtCoder submissions: %v", err)
+		}
 
-	allSubmissions = append(allSubmissions, cfSubs...)
-
-	acFrom := opts.GetAtCoderSecond()
-	acSubs, err := atcoder.FetchSubmissions(opts.Handle, acFrom)
-	if err != nil {
-		log.Fatalf("Failed to fetch AtCoder submissions: %v", err)
+		allSubmissions = append(allSubmissions, acSubs...)
 	}
-
-	allSubmissions = append(allSubmissions, acSubs...)
 
 	// Safety check
 	if len(allSubmissions) == 0 {
@@ -42,6 +48,7 @@ func main() {
 	//	return allSubmissions[i].SubmittedAt.After(allSubmissions[j].SubmittedAt)
 	//})
 
+	// Sorting
 	slices.SortFunc(allSubmissions, func(a, b models.Submission) int {
 		return b.SubmittedAt.Compare(a.SubmittedAt)
 	})

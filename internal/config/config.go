@@ -11,14 +11,19 @@ type Options struct {
 	Handle string
 	Last   int
 	Date   string
+	CF     bool
+	ATC    bool
 }
 
 func Parse() *Options {
 	opts := &Options{}
 
-	// Using StringVar/IntVar to bind terminal inputs directly to the struct's memory addresses
+	// Using StringVar/IntVar/BoolVar to bind terminal inputs directly to the struct's memory addresses
 	flag.IntVar(&opts.Last, "last", -1, "Fetches N recent successful submissions")
 	flag.StringVar(&opts.Date, "date", "", "Filter by specified date (DD-MM-YYYY)")
+
+	flag.BoolVar(&opts.CF, "cf", false, "Filter by Codeforces submissions")
+	flag.BoolVar(&opts.ATC, "atc", false, "Filter by AtCoder submissions")
 
 	flag.Usage = func() {
 		log.Printf("Usage: %s [flags] <platform-handle>\n", os.Args[0])
