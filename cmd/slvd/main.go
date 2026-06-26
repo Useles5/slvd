@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"slices"
+	"sync"
 
 	"github.com/Useles5/slvd/internal/config"
 	"github.com/Useles5/slvd/internal/filter"
@@ -16,28 +17,48 @@ import (
 func main() {
 	opts := config.Parse()
 
-	var allSubmissions []models.Submission
-
 	fetchAll := !opts.CF && !opts.ATC
 
+	var wg sync.WaitGroup
+
+	var cfSubmissions []models.Submission
+	var atcSubmissions []models.Submission
+
 	if fetchAll || opts.CF {
-		cfSubs, err := codeforces.FetchSubmissions(opts.Handle)
-		if err != nil {
-			log.Fatalf("Failed to fetch Codeforces submissions: %v", err)
-		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			cfSubs, err := codeforces.FetchSubmissions(opts.Handle)
+			if err != nil {
+				log.Printf("Warning: Failed to fetch Codeforces submissions: %v", err)
+				return
+			}
 
-		allSubmissions = append(allSubmissions, cfSubs...)
+			cfSubmissions = cfSubs
+		}()
+
 	}
-	
+
 	if fetchAll || opts.ATC {
-		acFrom := opts.GetAtCoderSecond()
-		acSubs, err := atcoder.FetchSubmissions(opts.Handle, acFrom)
-		if err != nil {
-			log.Fatalf("Failed to fetch AtCoder submissions: %v", err)
-		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			acFrom := opts.GetAtCoderSecond()
+			acSubs, err := atcoder.FetchSubmissions(opts.Handle, acFrom)
+			if err != nil {
+				log.Printf("Warning: Failed to fetch AtCoder submissions: %v", err)
+			}
 
-		allSubmissions = append(allSubmissions, acSubs...)
+			atcSubmissions = acSubs
+		}()
+
 	}
+
+	wg.Wait()
+
+	var allSubmissions []models.Submission
+	allSubmissions = append(allSubmissions, cfSubmissions...)
+	allSubmissions = append(allSubmissions, atcSubmissions...)
 
 	// Safety check
 	if len(allSubmissions) == 0 {
