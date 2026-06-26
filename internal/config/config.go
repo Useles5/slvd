@@ -13,6 +13,7 @@ type Options struct {
 	Date   string
 	CF     bool
 	ATC    bool
+	LC     bool
 }
 
 func Parse() *Options {
@@ -24,6 +25,7 @@ func Parse() *Options {
 
 	flag.BoolVar(&opts.CF, "cf", false, "Filter by Codeforces submissions")
 	flag.BoolVar(&opts.ATC, "atc", false, "Filter by AtCoder submissions")
+	flag.BoolVar(&opts.LC, "lc", false, "Filter by Leetcode submissions")
 
 	flag.Usage = func() {
 		log.Printf("Usage: %s [flags] <platform-handle>\n", os.Args[0])

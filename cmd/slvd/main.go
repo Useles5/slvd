@@ -12,17 +12,19 @@ import (
 	"github.com/Useles5/slvd/internal/models"
 	"github.com/Useles5/slvd/internal/platform/atcoder"
 	"github.com/Useles5/slvd/internal/platform/codeforces"
+	"github.com/Useles5/slvd/internal/platform/leetcode"
 )
 
 func main() {
 	opts := config.Parse()
 
-	fetchAll := !opts.CF && !opts.ATC
+	fetchAll := !opts.CF && !opts.ATC && !opts.LC
 
 	var wg sync.WaitGroup
 
 	var cfSubmissions []models.Submission
 	var atcSubmissions []models.Submission
+	var lcSubmissions []models.Submission
 
 	if fetchAll || opts.CF {
 		wg.Add(1)
@@ -54,11 +56,25 @@ func main() {
 
 	}
 
+	if fetchAll || opts.LC {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			lcSubs, err := leetcode.FetchSubmissions(opts.Handle)
+			if err != nil {
+				log.Printf("Warning: Failed to fetch LeetCode submissions: %v", err)
+			}
+
+			lcSubmissions = lcSubs
+		}()
+	}
+
 	wg.Wait()
 
 	var allSubmissions []models.Submission
 	allSubmissions = append(allSubmissions, cfSubmissions...)
 	allSubmissions = append(allSubmissions, atcSubmissions...)
+	allSubmissions = append(allSubmissions, lcSubmissions...)
 
 	// Safety check
 	if len(allSubmissions) == 0 {
