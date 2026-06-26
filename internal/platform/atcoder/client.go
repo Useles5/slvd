@@ -30,7 +30,7 @@ func FetchSubmissions(handle string, fromSecond int64) ([]models.Submission, err
 	}
 
 	safeUserName := url.QueryEscape(handle)
-	
+
 	apiURL := fmt.Sprintf("https://kenkoooo.com/atcoder/atcoder-api/v3/user/submissions?user=%s&from_second=%d", safeUserName, fromSecond)
 
 	client := &http.Client{
@@ -49,7 +49,7 @@ func FetchSubmissions(handle string, fromSecond int64) ([]models.Submission, err
 	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API returned non-200 status: %d %s", resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf("atCoder API returned non-200 status: %d %s", resp.StatusCode, resp.Status)
 	}
 
 	var data []acSubmission
@@ -97,7 +97,7 @@ func fetchProblemMap() (map[string]string, error) {
 	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API returned non-200 status: %d %s", resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf("atCoder API returned non-200 status: %d %s", resp.StatusCode, resp.Status)
 	}
 
 	var problems []acProblem

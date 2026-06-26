@@ -50,7 +50,7 @@ func FetchSubmissions(handle string) ([]models.Submission, error) {
 	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API returned non-200 status: %d %s", resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf("codeforces API returned non-200 status: %d %s", resp.StatusCode, resp.Status)
 	}
 
 	var data cfResponse
