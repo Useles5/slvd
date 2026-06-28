@@ -18,63 +18,49 @@ import (
 func main() {
 	opts := config.Parse()
 
-	fetchAll := !opts.CF && !opts.ATC && !opts.LC
-
 	var wg sync.WaitGroup
 
-	var cfSubmissions []models.Submission
-	var atcSubmissions []models.Submission
-	var lcSubmissions []models.Submission
+	var mu sync.Mutex
+	var allSubmissions []models.Submission
 
-	if fetchAll || opts.CF {
+	fetch := func(platform string) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			cfSubs, err := codeforces.FetchSubmissions(opts.Handle)
-			if err != nil {
-				log.Printf("Warning: Failed to fetch Codeforces submissions: %v", err)
+			handle := opts.Handles[platform]
+
+			var subs []models.Submission
+			var err error
+
+			switch platform {
+			case "codeforces":
+				subs, err = codeforces.FetchSubmissions(handle)
+			case "atcoder":
+				acFrom := opts.GetAtCoderSecond()
+				subs, err = atcoder.FetchSubmissions(handle, acFrom)
+			case "leetcode":
+				subs, err = leetcode.FetchSubmissions(handle)
+			default:
+				log.Printf("Warning: Unknown platform: %s", platform)
 				return
 			}
 
-			cfSubmissions = cfSubs
-		}()
-
-	}
-
-	if fetchAll || opts.ATC {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			acFrom := opts.GetAtCoderSecond()
-			acSubs, err := atcoder.FetchSubmissions(opts.Handle, acFrom)
 			if err != nil {
-				log.Printf("Warning: Failed to fetch AtCoder submissions: %v", err)
+				log.Printf("Warning: Failed to fetch %s submissions: %v", platform, err)
+				return
 			}
 
-			atcSubmissions = acSubs
-		}()
+			mu.Lock()
+			allSubmissions = append(allSubmissions, subs...)
+			mu.Unlock()
 
-	}
-
-	if fetchAll || opts.LC {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			lcSubs, err := leetcode.FetchSubmissions(opts.Handle)
-			if err != nil {
-				log.Printf("Warning: Failed to fetch LeetCode submissions: %v", err)
-			}
-
-			lcSubmissions = lcSubs
 		}()
 	}
 
+	for _, platform := range opts.Platforms {
+		fetch(platform)
+	}
 	wg.Wait()
-
-	var allSubmissions []models.Submission
-	allSubmissions = append(allSubmissions, cfSubmissions...)
-	allSubmissions = append(allSubmissions, atcSubmissions...)
-	allSubmissions = append(allSubmissions, lcSubmissions...)
 
 	// Safety check
 	if len(allSubmissions) == 0 {
