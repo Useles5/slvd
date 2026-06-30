@@ -9,7 +9,7 @@ import (
 )
 
 // GetSolvedProblems is the pipeline Orchestrator
-func GetSolvedProblems(submissions []models.Submission, opts *config.Options) ([]string, int) {
+func GetSolvedProblems(submissions []models.Submission, opts *config.Options) ([]models.Submission, int) {
 
 	// Clean
 	data := keepOnlyAccepted(submissions)
@@ -20,7 +20,7 @@ func GetSolvedProblems(submissions []models.Submission, opts *config.Options) ([
 	}
 
 	// Limit and Format
-	return applyLimitAndFormat(data, opts.Last)
+	return applyLimitAndDeDuplicate(data, opts.Last)
 }
 
 // keepOnlyAccepted removes failed submissions
@@ -75,10 +75,10 @@ func filterByDate(submissions []models.Submission, dateStr string) []models.Subm
 	return filteredSubmissions
 }
 
-// applyLimitAndFormat handles unique submissions and the N cutoff (--last flag)
-func applyLimitAndFormat(submissions []models.Submission, limit int) ([]string, int) {
+// applyLimitAndDeDuplicate handles unique submissions and the N cutoff (--last flag)
+func applyLimitAndDeDuplicate(submissions []models.Submission, limit int) ([]models.Submission, int) {
 	seen := make(map[string]struct{})
-	var solved []string
+	var solved []models.Submission
 	processed := 0
 
 	for _, sub := range submissions {
@@ -99,7 +99,7 @@ func applyLimitAndFormat(submissions []models.Submission, limit int) ([]string, 
 
 		seen[uniqueKey] = struct{}{}
 
-		solved = append(solved, fmt.Sprintf("[%s] %s - %s", sub.Platform, sub.ProblemKey, sub.ProblemName))
+		solved = append(solved, sub)
 	}
 
 	return solved, processed

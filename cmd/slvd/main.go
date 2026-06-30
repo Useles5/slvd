@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 	"slices"
 	"sync"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/Useles5/slvd/internal/platform/atcoder"
 	"github.com/Useles5/slvd/internal/platform/codeforces"
 	"github.com/Useles5/slvd/internal/platform/leetcode"
+	"github.com/Useles5/slvd/internal/printer"
 )
 
 func main() {
@@ -77,13 +77,6 @@ func main() {
 	})
 
 	solvedProblems, processed := filter.GetSolvedProblems(allSubmissions, opts)
-	for _, solvedProblem := range solvedProblems {
-		fmt.Println(solvedProblem)
-	}
-
-	if len(solvedProblems) == 0 {
-		fmt.Fprintf(os.Stderr, "No problems found\n")
-	}
 
 	modeStr := "Today"
 	if opts.Date != "" {
@@ -93,5 +86,5 @@ func main() {
 		modeStr = fmt.Sprintf("Last %d", opts.Last)
 	}
 
-	fmt.Fprintf(os.Stderr, "[Mode: %s] fetched=%d processed=%d unique_solved=%d\n", modeStr, len(allSubmissions), processed, len(solvedProblems))
+	printer.PrintTable(solvedProblems, modeStr, len(allSubmissions), processed)
 }
