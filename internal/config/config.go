@@ -81,8 +81,25 @@ func Parse() *Options {
 	flag.BoolVar(&lc, "lc", false, "Filter by Leetcode submissions")
 
 	flag.Usage = func() {
-		log.Printf("Usage: %s [flags]\n", os.Args[0])
-		flag.PrintDefaults()
+		fmt.Printf("USAGE:\n")
+		fmt.Printf("  slvd [flags]\n\n")
+
+		fmt.Printf("FILTERING FLAGS:\n")
+		fmt.Printf("  -last <int>      Fetch N recent successful submissions (e.g., 10)\n")
+		fmt.Printf("  -date <string>   Filter by specified date in DD-MM-YYYY format\n")
+		fmt.Printf("  -cf              Show ONLY Codeforces submissions\n")
+		fmt.Printf("  -atc             Show ONLY AtCoder submissions\n")
+		fmt.Printf("  -lc              Show ONLY LeetCode submissions\n\n")
+
+		fmt.Printf("OUTPUT FLAGS:\n")
+		fmt.Printf("  -md              Output table in Markdown format\n")
+		fmt.Printf("  -h, --help       Show this help message\n\n")
+
+		fmt.Printf("EXAMPLES:\n")
+		fmt.Printf("  slvd -last 10                # Get last 10 solves from all platforms\n")
+		fmt.Printf("  slvd -last 5 -md             # Get last 5 solves in Markdown format\n")
+		fmt.Printf("  slvd -date 30-06-2026 -cf    # Get Codeforces solves for a specific date\n")
+		fmt.Println()
 	}
 	flag.Parse()
 
