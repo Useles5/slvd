@@ -38,7 +38,7 @@ func PrintTable(solved []models.Submission, modeStr string, totalFetched, proces
 		if len(name) > 35 {
 			name = name[:32] + "..."
 		}
-		timeStr := sub.SubmittedAt.Local().Format("15:04")
+		timeStr := sub.SubmittedAt.Local().Format("02 Jan 06 15:04")
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", platform, sub.ProblemKey, name, timeStr)
 	}
