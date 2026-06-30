@@ -17,6 +17,10 @@ type ConfigFile struct {
 	Platforms struct {
 		Enabled []string `toml:"enabled"`
 	} `toml:"platforms"`
+	Output struct {
+		Markdown bool `toml:"markdown"`
+		Copy     bool `toml:"copy"`
+	} `toml:"output"`
 }
 
 type Options struct {
@@ -56,6 +60,10 @@ func Parse() *Options {
 	opts := &Options{
 		Handles:   make(map[string]string),
 		Platforms: []string{},
+		Last:      -1,
+		Date:      "",
+		Markdown:  false,
+		Copy:      false,
 	}
 
 	cfg, err := LoadConfig()
@@ -65,18 +73,20 @@ func Parse() *Options {
 		if cfg.Handles != nil {
 			opts.Handles = cfg.Handles
 		}
-		if cfg.Platforms.Enabled != nil {
+		if len(cfg.Platforms.Enabled) > 0 {
 			opts.Platforms = cfg.Platforms.Enabled
 		}
+
+		opts.Markdown = cfg.Output.Markdown
+		opts.Copy = cfg.Output.Copy
 	}
 
-	// Using StringVar/IntVar to bind terminal inputs directly to the struct's memory addresses
-	flag.IntVar(&opts.Last, "last", -1, "Fetches N recent successful submissions")
-	flag.StringVar(&opts.Date, "date", "", "Filter by specified date (DD-MM-YYYY)")
+	// Using StringVar/IntVar/BoolVar to bind terminal inputs directly to the struct's memory addresses
+	flag.IntVar(&opts.Last, "last", opts.Last, "Fetches N recent successful submissions")
+	flag.StringVar(&opts.Date, "date", opts.Date, "Filter by specified date (DD-MM-YYYY)")
+	flag.BoolVar(&opts.Markdown, "md", opts.Markdown, "Output table in Markdown format")
+	flag.BoolVar(&opts.Copy, "copy", opts.Copy, "Copy output to clipboard")
 
-	flag.BoolVar(&opts.Markdown, "md", false, "Output table in Markdown format")
-	flag.BoolVar(&opts.Copy, "copy", false, "Copy output to clipboard")
-	
 	var cf, atc, lc bool
 	flag.BoolVar(&cf, "cf", false, "Filter by Codeforces submissions")
 	flag.BoolVar(&atc, "atc", false, "Filter by AtCoder submissions")
@@ -112,11 +122,9 @@ func Parse() *Options {
 		if cf {
 			opts.Platforms = append(opts.Platforms, "codeforces")
 		}
-
 		if atc {
 			opts.Platforms = append(opts.Platforms, "atcoder")
 		}
-
 		if lc {
 			opts.Platforms = append(opts.Platforms, "leetcode")
 		}
