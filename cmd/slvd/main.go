@@ -63,7 +63,9 @@ func main() {
 
 	// Safety check
 	if len(allSubmissions) == 0 {
-		log.Fatalf("Critical: Could not fetch data from any platform")
+		fmt.Println("No submissions found for the selected timeframe. Time to code!")
+		return
+
 	}
 
 	//sort.Slice(allSubmissions, func(i, j int) bool {
