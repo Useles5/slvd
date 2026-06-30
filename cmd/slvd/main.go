@@ -22,7 +22,6 @@ func main() {
 
 	var mu sync.Mutex
 	var allSubmissions []models.Submission
-
 	fetch := func(platform string) {
 		wg.Add(1)
 		go func() {
@@ -86,5 +85,5 @@ func main() {
 		modeStr = fmt.Sprintf("Last %d", opts.Last)
 	}
 
-	printer.PrintTable(solvedProblems, modeStr, len(allSubmissions), processed, opts.Markdown)
+	printer.PrintTable(solvedProblems, modeStr, len(allSubmissions), processed, opts.Markdown, opts.Copy)
 }

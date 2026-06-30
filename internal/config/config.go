@@ -21,6 +21,7 @@ type ConfigFile struct {
 
 type Options struct {
 	Markdown  bool
+	Copy      bool
 	Last      int
 	Date      string
 	Handles   map[string]string
@@ -74,7 +75,8 @@ func Parse() *Options {
 	flag.StringVar(&opts.Date, "date", "", "Filter by specified date (DD-MM-YYYY)")
 
 	flag.BoolVar(&opts.Markdown, "md", false, "Output table in Markdown format")
-
+	flag.BoolVar(&opts.Copy, "copy", false, "Copy output to clipboard")
+	
 	var cf, atc, lc bool
 	flag.BoolVar(&cf, "cf", false, "Filter by Codeforces submissions")
 	flag.BoolVar(&atc, "atc", false, "Filter by AtCoder submissions")
@@ -93,6 +95,7 @@ func Parse() *Options {
 
 		fmt.Printf("OUTPUT FLAGS:\n")
 		fmt.Printf("  -md              Output table in Markdown format\n")
+		fmt.Printf("  -copy            Copy the generated table to system clipboard\n")
 		fmt.Printf("  -h, --help       Show this help message\n\n")
 
 		fmt.Printf("EXAMPLES:\n")
