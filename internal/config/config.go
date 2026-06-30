@@ -20,6 +20,7 @@ type ConfigFile struct {
 }
 
 type Options struct {
+	Markdown  bool
 	Last      int
 	Date      string
 	Handles   map[string]string
@@ -72,6 +73,8 @@ func Parse() *Options {
 	flag.IntVar(&opts.Last, "last", -1, "Fetches N recent successful submissions")
 	flag.StringVar(&opts.Date, "date", "", "Filter by specified date (DD-MM-YYYY)")
 
+	flag.BoolVar(&opts.Markdown, "md", false, "Output table in Markdown format")
+
 	var cf, atc, lc bool
 	flag.BoolVar(&cf, "cf", false, "Filter by Codeforces submissions")
 	flag.BoolVar(&atc, "atc", false, "Filter by AtCoder submissions")
@@ -98,7 +101,7 @@ func Parse() *Options {
 			opts.Platforms = append(opts.Platforms, "leetcode")
 		}
 	}
-	
+
 	if len(opts.Platforms) == 0 {
 		log.Fatal("Critical: No platforms enabled. Please check config.toml or use flags (-lc, -cf, -atc).")
 	}

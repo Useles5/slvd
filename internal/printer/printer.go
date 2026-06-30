@@ -13,22 +13,38 @@ import (
 	"golang.org/x/text/language"
 )
 
-func PrintTable(solved []models.Submission, modeStr string, totalFetched, processed int) {
+func PrintTable(solved []models.Submission, modeStr string, totalFetched, processed int, asMarkdown bool) {
 	if len(solved) == 0 {
 		fmt.Println("No problems found")
 		return
 	}
 
-	var buf bytes.Buffer
-
-	w := tabwriter.NewWriter(&buf, 0, 15, 3, ' ', 0)
 	caser := cases.Title(language.English)
 	zoneName, _ := time.Now().Local().Zone()
-
-	fmt.Fprintf(w, "PLATFORM\tID\tPROBLEM NAME\tTIME (%s)\n", zoneName)
-
 	platformsMap := make(map[string]struct{})
 
+	if asMarkdown {
+		fmt.Printf("| PLATFORM | ID | PROBLEM NAME | TIME (%s) |\n", zoneName)
+		fmt.Println("|---|---|---|---|")
+
+		for _, sub := range solved {
+
+			platformsMap[sub.Platform] = struct{}{}
+			platform := caser.String(strings.ToLower(sub.Platform))
+			timeStr := sub.SubmittedAt.Local().Format("02 Jan 06 15:04")
+
+			fmt.Printf("| %s | %s | %s | %s |\n", platform, sub.ProblemKey, sub.ProblemName, timeStr)
+		}
+		fmt.Printf("\n**SUMMARY:** %d solved | %d platform/s | %d fetched | Mode: %s\n\n", len(solved), len(platformsMap), totalFetched, modeStr)
+		return
+
+	}
+
+	var buf bytes.Buffer
+	w := tabwriter.NewWriter(&buf, 0, 15, 3, ' ', 0)
+
+	fmt.Fprintf(w, "PLATFORM\tID\tPROBLEM NAME\tTIME (%s)\n", zoneName)
+	
 	for _, sub := range solved {
 
 		platformsMap[sub.Platform] = struct{}{}
@@ -66,6 +82,5 @@ func PrintTable(solved []models.Submission, modeStr string, totalFetched, proces
 		fmt.Println(separator)
 	}
 
-	fmt.Printf("SUMMARY: %d solved | %d platform/s | %d fetched | Mode: %s\n\n",
-		len(solved), len(platformsMap), totalFetched, modeStr)
+	fmt.Printf("SUMMARY: %d solved | %d platform/s | %d fetched | Mode: %s\n\n", len(solved), len(platformsMap), totalFetched, modeStr)
 }

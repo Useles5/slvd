@@ -86,5 +86,5 @@ func main() {
 		modeStr = fmt.Sprintf("Last %d", opts.Last)
 	}
 
-	printer.PrintTable(solvedProblems, modeStr, len(allSubmissions), processed)
+	printer.PrintTable(solvedProblems, modeStr, len(allSubmissions), processed, opts.Markdown)
 }
